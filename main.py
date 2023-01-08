@@ -1,12 +1,13 @@
 # Create a telegram bot and host it on Heroku
 
-import os
 import logging
+import os
+
 from dotenv import load_dotenv
-
 from telegram import Update
-from telegram.ext import CommandHandler, Application, ConversationHandler, MessageHandler, filters, CallbackContext
+from telegram.ext import CommandHandler, Application, CallbackContext
 
+import authentication
 import database
 
 # Enable logging
@@ -28,7 +29,11 @@ HEROKU_PATH = os.getenv('HEROKU_PATH')
 # context. Error handlers also receive the raised TelegramError object in error.
 async def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    await update.message.reply_text('Hi!')
+    text = 'Hi!\n'
+    text += 'You are ' + (
+        '' if authentication.is_authenticated_user(update.effective_user.id) else 'not ') + \
+            'an authenticated user.\n'
+    await update.message.reply_text(text)
     return
 
 
