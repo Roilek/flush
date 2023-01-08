@@ -50,7 +50,6 @@ def register_user(user_id: int, first_name: str, last_name: str = None, username
         "first_name": first_name,
         "last_name": last_name,
         "username": username,
-        "score": 0,
         "current_enigma": 0,
         "is_admin": False,
     }

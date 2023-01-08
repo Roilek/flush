@@ -72,7 +72,7 @@ async def reset(update: Update, context: CallbackContext) -> None:
     """Reset the user's enigma"""
     user_id = update.effective_user.id
     database.reset_user_enigma(user_id)
-    await update.message.reply_text("You can send me a new engima number to start guessing again!")
+    await update.message.reply_text("You can send me a new enigma number to start guessing again!")
     return
 
 
@@ -90,12 +90,11 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     if database.user_has_enigma(user_id):
         # The user is attempting to solve an enigma
         enigma = database.get_user_enigma(user_id)
+        # TODO main should not know the structure of enigma
         enigma_id = enigma['id']
         enigma_solved = enigma['answer'] == update.message.text
-        # TODO main should not know the structure of enigma
         if enigma_solved:
             # The answer is correct
-            # TODO: Update the user's score
             # Update the user's enigma
             database.reset_user_enigma(user_id)
             text += "You solved the enigma!\n"
