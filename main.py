@@ -28,10 +28,16 @@ HEROKU_PATH = os.getenv('HEROKU_PATH')
 # context. Error handlers also receive the raised TelegramError object in error.
 async def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    text = 'Hi!\n'
-    text += 'You are ' + (
-        '' if database.is_authenticated(update.effective_user.id) else 'not ') + \
-            'an authenticated user.\n'
+    user_id = update.message.from_user.id
+    text = ""
+    if not database.user_exists(update.effective_user.id):
+        database.register_user(user_id, update.effective_user.first_name, update.effective_user.last_name,
+                               update.effective_user.username)
+        text += "Welcome to Flush!\n"
+    else:
+        text += "Welcome back to Flush!\n"
+    text += "You can try solving all the enigmas around FLEP. Just send me the enigma number and I'll send you the enigma\n"
+    text += "Send me /help to see everything I can do!\n"
     await update.message.reply_text(text)
     return
 
