@@ -75,16 +75,18 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     if database.user_has_enigma(user_id):
         # The user is attempting to solve an enigma
         enigma = database.get_user_enigma(user_id)
-        if enigma['answer'] == update.message.text:
+        # TODO main should not know the structure of enigma
+        if enigma["answer"] == update.message.text:
             # The answer is correct
             # TODO: Update the user's score
             # Update the user's enigma
-            database.update_user_enigma(user_id)
+            database.reset_user_enigma(user_id)
             await update.message.reply_text("You solved the enigma!")
         else:
             # The answer is incorrect
-            await update.message.reply_text(
-                "The answer is incorrect! Try again or send /reset to be able to send a new enigma id")
+            text = f"The answer is incorrect for enigma {str(enigma['id'])}\n"
+            text += "Try again or send /reset to be able to send a new enigma id"
+            await update.message.reply_text(text)
     else:
         # The user is sending an enigma id
         # Check if the message is a number
@@ -98,15 +100,21 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             await update.message.reply_text("This enigma doesn't exist")
             return
         # Check if the user already solved this enigma
+        enigma = database.get_enigma(enigma_id)
         if database.user_solved_enigma(user_id, enigma_id):
-            await update.message.reply_text("You already solved this enigma")
+            # TODO main should not know the structure of enigma
+            text = "You already solved this enigma!\n"
+            text += f"Enigma {enigma_id}: {enigma['question']}\n"
+            text += f"Answer: {enigma['answer']}\n"
+            text += f"Details: {enigma['details']}\n"
+            await update.message.reply_text(text)
             # TODO display the enigma and the answer
             return
         # Update the user's enigma
         database.update_user_enigma(user_id, enigma_id)
         # Send the enigma
-        enigma = database.get_user_enigma(user_id)
-        await update.message.reply_text(enigma['enigma'])
+        # TODO main should not know the structure of enigma
+        await update.message.reply_text(f"{enigma['name']} {enigma['description']}")
         return
 
 

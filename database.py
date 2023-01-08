@@ -81,10 +81,10 @@ def get_user_enigma(user_id: int) -> Mapping[str, Any]:
     db = mongo_client[DATABASE_NAME]
     collection = db[ENIGMAS_COLLECTION_NAME]
     user = db[USERS_COLLECTION_NAME].find_one({"telegram_id": user_id})
-    return collection.find_one({"_id": user["current_enigma"]})
+    return collection.find_one({"id": user["current_enigma"]})
 
 
-def update_user_enigma(user_id: int, enigma_id: int = 0) -> None:
+def update_user_enigma(user_id: int, enigma_id: int) -> None:
     """Update the enigma of the user."""
     db = mongo_client[DATABASE_NAME]
     collection = db[USERS_COLLECTION_NAME]
@@ -92,11 +92,24 @@ def update_user_enigma(user_id: int, enigma_id: int = 0) -> None:
     return
 
 
+def reset_user_enigma(user_id: int) -> None:
+    """Reset the enigma of the user."""
+    update_user_enigma(user_id, enigma_id=0)
+    return
+
+
 def enigma_exists(enigma_id: int) -> bool:
     """Return True if the enigma exists."""
     db = mongo_client[DATABASE_NAME]
     collection = db[ENIGMAS_COLLECTION_NAME]
-    return collection.find_one({"_id": enigma_id}) is not None
+    return collection.find_one({"id": enigma_id}) is not None
+
+
+def get_enigma(enigma_id: int) -> Mapping[str, Any]:
+    """Return the enigma."""
+    db = mongo_client[DATABASE_NAME]
+    collection = db[ENIGMAS_COLLECTION_NAME]
+    return collection.find_one({"id": enigma_id})
 
 
 def user_solved_enigma(user_id, enigma_id):
