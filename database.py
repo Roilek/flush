@@ -5,7 +5,6 @@ import pymongo
 
 from dotenv import load_dotenv
 
-
 # Constants
 
 DATABASE_NAME = "flush"
@@ -15,12 +14,11 @@ AUTHENTICATED_USERS_COLLECTION_NAME = "authenticated_users"
 mongo_client: pymongo.MongoClient = None
 
 
-def get_authenticated_users() -> list:
-    """Return a list of all the authenticated telegram ids."""
-    users = []
-    for x in mongo_client[DATABASE_NAME][AUTHENTICATED_USERS_COLLECTION_NAME].find({}, {"_id": 0, "telegram_id": 1}):
-        users.append(x["telegram_id"])
-    return users
+def is_authenticated(user_id: int) -> bool:
+    """Return True if the user is authenticated."""
+    db = mongo_client[DATABASE_NAME]
+    collection = db[AUTHENTICATED_USERS_COLLECTION_NAME]
+    return collection.find_one({"telegram_id": user_id}) is not None
 
 
 def setup() -> None:

@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import CommandHandler, Application, CallbackContext
 
-import authentication
 import database
 
 # Enable logging
@@ -31,7 +30,7 @@ async def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
     text = 'Hi!\n'
     text += 'You are ' + (
-        '' if authentication.is_authenticated_user(update.effective_user.id) else 'not ') + \
+        '' if database.is_authenticated(update.effective_user.id) else 'not ') + \
             'an authenticated user.\n'
     await update.message.reply_text(text)
     return
