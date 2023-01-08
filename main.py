@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import CommandHandler, Application, ConversationHandler, MessageHandler, filters, CallbackContext
 
+import database
+
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -71,4 +73,5 @@ def main() -> None:
 
 
 if __name__ == '__main__':
+    database.setup()
     main()
