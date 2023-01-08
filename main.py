@@ -68,6 +68,20 @@ async def help_command(update: Update, context: CallbackContext) -> None:
     return
 
 
+async def reset(update: Update, context: CallbackContext) -> None:
+    """Reset the user's enigma"""
+    user_id = update.effective_user.id
+    database.reset_user_enigma(user_id)
+    await update.message.reply_text("You can send me a new engima number to start guessing again!")
+    return
+
+
+async def report(update: Update, context: CallbackContext) -> None:
+    """Report a bug"""
+    await update.message.reply_text("Not implemented yet...")
+    return
+
+
 async def handle_message(update: Update, context: CallbackContext) -> None:
     """Handle messages"""
     # The message text can be an enigma number or an enigma answer
@@ -101,7 +115,7 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
         # Check if the enigma exists
         elif not database.enigma_exists(int(enigma_id)):
             # The enigma does not exist
-            text += "This enigma doesn't exist\n"
+            text += "This enigma doesn't exist! If you think this is a problem, please /report it!\n"
         else:
             # The enigma exists
             enigma_id = int(enigma_id)
@@ -141,6 +155,7 @@ def main() -> None:
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("reset", reset))
 
     # on noncommand i.e message - process the message
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
