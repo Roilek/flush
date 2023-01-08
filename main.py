@@ -72,50 +72,57 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     """Handle messages"""
     # The message text can be an enigma number or an enigma answer
     user_id = update.effective_user.id
+    text = ""
     if database.user_has_enigma(user_id):
         # The user is attempting to solve an enigma
         enigma = database.get_user_enigma(user_id)
+        enigma_id = enigma['id']
+        enigma_solved = enigma['answer'] == update.message.text
         # TODO main should not know the structure of enigma
-        if enigma["answer"] == update.message.text:
+        if enigma_solved:
             # The answer is correct
             # TODO: Update the user's score
             # Update the user's enigma
             database.reset_user_enigma(user_id)
-            await update.message.reply_text("You solved the enigma!")
+            text += "You solved the enigma!\n"
+            text += "You can send me a new enigma id to try to solve another enigma\n"
         else:
             # The answer is incorrect
-            text = f"The answer is incorrect for enigma {str(enigma['id'])}\n"
+            # TODO main should not know the structure of enigma
+            text += f"The answer is incorrect for enigma {enigma_id}\n"
             text += "Try again or send /reset to be able to send a new enigma id"
-            await update.message.reply_text(text)
+        database.add_attempt(user_id, enigma_id, update.message.text, enigma_solved)
     else:
         # The user is sending an enigma id
+        enigma_id = update.message.text
         # Check if the message is a number
-        try:
-            enigma_id = int(update.message.text)
-        except ValueError:
-            await update.message.reply_text("Please send a number")
-            return
+        if not enigma_id.isdigit():
+            text += "The enigma id must be a number\n"
         # Check if the enigma exists
-        if not database.enigma_exists(enigma_id):
-            await update.message.reply_text("This enigma doesn't exist")
-            return
-        # Check if the user already solved this enigma
-        enigma = database.get_enigma(enigma_id)
-        if database.user_solved_enigma(user_id, enigma_id):
-            # TODO main should not know the structure of enigma
-            text = "You already solved this enigma!\n"
-            text += f"Enigma {enigma_id}: {enigma['question']}\n"
-            text += f"Answer: {enigma['answer']}\n"
-            text += f"Details: {enigma['details']}\n"
-            await update.message.reply_text(text)
-            # TODO display the enigma and the answer
-            return
-        # Update the user's enigma
-        database.update_user_enigma(user_id, enigma_id)
-        # Send the enigma
-        # TODO main should not know the structure of enigma
-        await update.message.reply_text(f"{enigma['name']} {enigma['description']}")
-        return
+        elif not database.enigma_exists(int(enigma_id)):
+            # The enigma does not exist
+            text += "This enigma doesn't exist\n"
+        else:
+            # The enigma exists
+            enigma_id = int(enigma_id)
+            enigma = database.get_enigma(enigma_id)
+            # Check if the user already solved this enigma
+            if database.user_solved_enigma(user_id, enigma_id):
+                # TODO main should not know the structure of enigma
+                text = "You already solved this enigma!\n"
+                text += f"Enigma {enigma_id}\n"
+                text += f"Name : {enigma['name']}\n"
+                text += f"Description : {enigma['description']}\n"
+                text += f"Answer: {enigma['answer']}\n"
+                text += f"Details: {enigma['details']}\n"
+            else:
+                # Update the user's enigma
+                database.update_user_enigma(user_id, enigma_id)
+                # Send the enigma
+                # TODO main should not know the structure of enigma
+                text += f"Enigma {enigma_id} {enigma['description']}\n"
+    await update.message.reply_text(text)
+    return
 
 
 async def error(update: Update, context: CallbackContext) -> None:

@@ -2,7 +2,6 @@ import os
 from typing import Any, Mapping
 
 import pymongo
-
 from dotenv import load_dotenv
 
 # Constants
@@ -11,6 +10,7 @@ DATABASE_NAME = "flush"
 USERS_COLLECTION_NAME = "users"
 ENIGMAS_COLLECTION_NAME = "enigmas"
 AUTHENTICATED_USERS_COLLECTION_NAME = "authenticated_users"
+ATTEMPTS_COLLECTION_NAME = "attempts"
 
 mongo_client: pymongo.MongoClient = None
 
@@ -112,6 +112,24 @@ def get_enigma(enigma_id: int) -> Mapping[str, Any]:
     return collection.find_one({"id": enigma_id})
 
 
-def user_solved_enigma(user_id, enigma_id):
-    """Return True if the user has solved the enigma."""
-    return False
+def user_solved_enigma(user_id, enigma_id) -> bool:
+    """Return True if the user solved the enigma."""
+    db = mongo_client[DATABASE_NAME]
+    collection = db[ATTEMPTS_COLLECTION_NAME]
+    return collection.find_one({"user_id": user_id, "enigma_id": enigma_id, "correct": True}) is not None
+
+
+# --- ATTEMPTS RELATION ---
+
+def add_attempt(user_id: int, enigma_id: int, attempt: str, correct: bool) -> None:
+    """Add an attempt."""
+    db = mongo_client[DATABASE_NAME]
+    collection = db[ATTEMPTS_COLLECTION_NAME]
+    attempt = {
+        "user_id": user_id,
+        "enigma_id": enigma_id,
+        "attempt": attempt,
+        "correct": correct,
+    }
+    collection.insert_one(attempt)
+    return
