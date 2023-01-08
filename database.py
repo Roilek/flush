@@ -15,7 +15,7 @@ AUTHENTICATED_USERS_COLLECTION_NAME = "authenticated_users"
 mongo_client: pymongo.MongoClient = None
 
 
-def is_authenticated(user_id: int) -> bool:
+def is_admin(user_id: int) -> bool:
     """Return True if the user is authenticated."""
     db = mongo_client[DATABASE_NAME]
     collection = db[AUTHENTICATED_USERS_COLLECTION_NAME]

@@ -44,7 +44,26 @@ async def start(update: Update, context: CallbackContext) -> None:
 
 async def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
-    await update.message.reply_text('Help!')
+    text = "Here's everything I can do:\n"
+    text += "/start - Start the bot\n"
+    text += "/help - Show this message\n"
+    # text += "/enigma - Get the enigma\n"
+    # text += "/score - Get your score\n"
+    # text += "/leaderboard - Get the leaderboard\n"
+    # text += "/hint - Get a hint for the current enigma\n"
+    # text += "/delete - Delete all your informations\n"
+    # text += "/suggest - Suggest an enigma or a feature\n"
+    # text += "/report - Report a bug\n"
+    # text += "/contribute - Contribute to the bot\n"
+    if database.is_admin(update.effective_user.id):
+        text += "\nAdmin commands:\n"
+        # text += "/add_enigma - Add an enigma\n"
+        # text += "/delete_enigma - Delete an enigma\n"
+        # text += "/add_hint - Add a hint\n"
+        # text += "/delete_hint - Delete a hint\n"
+        # text += "/add_admin - Add an admin\n"
+        # text += "/delete_admin - Delete an admin\n"
+    await update.message.reply_text(text)
     return
 
 
