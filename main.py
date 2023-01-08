@@ -5,7 +5,7 @@ import os
 
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import CommandHandler, Application, CallbackContext
+from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 
 import database
 
@@ -28,9 +28,9 @@ HEROKU_PATH = os.getenv('HEROKU_PATH')
 # context. Error handlers also receive the raised TelegramError object in error.
 async def start(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /start is issued."""
-    user_id = update.message.from_user.id
+    user_id = update.effective_user.id
     text = ""
-    if not database.user_exists(update.effective_user.id):
+    if not database.user_exists(user_id):
         database.register_user(user_id, update.effective_user.first_name, update.effective_user.last_name,
                                update.effective_user.username)
         text += "Welcome to Flush!\n"
@@ -47,6 +47,7 @@ async def help_command(update: Update, context: CallbackContext) -> None:
     text = "Here's everything I can do:\n"
     text += "/start - Start the bot\n"
     text += "/help - Show this message\n"
+    text += "/reset - Reset your enigma\n"
     # text += "/enigma - Get the enigma\n"
     # text += "/score - Get your score\n"
     # text += "/leaderboard - Get the leaderboard\n"
@@ -67,10 +68,46 @@ async def help_command(update: Update, context: CallbackContext) -> None:
     return
 
 
-async def echo(update: Update, context: CallbackContext) -> None:
-    """Echo the user message."""
-    await update.message.reply_text(update.message.text)
-    return
+async def handle_message(update: Update, context: CallbackContext) -> None:
+    """Handle messages"""
+    # The message text can be an enigma number or an enigma answer
+    user_id = update.effective_user.id
+    if database.user_has_enigma(user_id):
+        # The user is attempting to solve an enigma
+        enigma = database.get_user_enigma(user_id)
+        if enigma['answer'] == update.message.text:
+            # The answer is correct
+            # TODO: Update the user's score
+            # Update the user's enigma
+            database.update_user_enigma(user_id)
+            await update.message.reply_text("You solved the enigma!")
+        else:
+            # The answer is incorrect
+            await update.message.reply_text(
+                "The answer is incorrect! Try again or send /reset to be able to send a new enigma id")
+    else:
+        # The user is sending an enigma id
+        # Check if the message is a number
+        try:
+            enigma_id = int(update.message.text)
+        except ValueError:
+            await update.message.reply_text("Please send a number")
+            return
+        # Check if the enigma exists
+        if not database.enigma_exists(enigma_id):
+            await update.message.reply_text("This enigma doesn't exist")
+            return
+        # Check if the user already solved this enigma
+        if database.user_solved_enigma(user_id, enigma_id):
+            await update.message.reply_text("You already solved this enigma")
+            # TODO display the enigma and the answer
+            return
+        # Update the user's enigma
+        database.update_user_enigma(user_id, enigma_id)
+        # Send the enigma
+        enigma = database.get_user_enigma(user_id)
+        await update.message.reply_text(enigma['enigma'])
+        return
 
 
 async def error(update: Update, context: CallbackContext) -> None:
@@ -89,6 +126,9 @@ def main() -> None:
     # on different commands - answer in Telegram
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
+
+    # on noncommand i.e message - process the message
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     # Start the Bot
     print("Bot starting...")
