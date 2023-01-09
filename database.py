@@ -4,6 +4,8 @@ from typing import Any, Mapping
 import pymongo
 from dotenv import load_dotenv
 
+from enigma import Enigma
+
 # Constants
 
 DATABASE_NAME = "flush"
@@ -75,12 +77,12 @@ def user_has_enigma(user_id: int) -> bool:
     return user["current_enigma"] != 0
 
 
-def get_user_enigma(user_id: int) -> Mapping[str, Any]:
+def get_user_enigma(user_id: int) -> Enigma:
     """Return the enigma of the user."""
     db = mongo_client[DATABASE_NAME]
-    collection = db[ENIGMAS_COLLECTION_NAME]
-    user = db[USERS_COLLECTION_NAME].find_one({"telegram_id": user_id})
-    return collection.find_one({"id": user["current_enigma"]})
+    collection = db[USERS_COLLECTION_NAME]
+    user = collection.find_one({"telegram_id": user_id})
+    return get_enigma(user["current_enigma"])
 
 
 def update_user_enigma(user_id: int, enigma_id: int) -> None:
@@ -104,11 +106,12 @@ def enigma_exists(enigma_id: int) -> bool:
     return collection.find_one({"id": enigma_id}) is not None
 
 
-def get_enigma(enigma_id: int) -> Mapping[str, Any]:
+def get_enigma(enigma_id: int) -> Enigma:
     """Return the enigma."""
     db = mongo_client[DATABASE_NAME]
     collection = db[ENIGMAS_COLLECTION_NAME]
-    return collection.find_one({"id": enigma_id})
+    enigma = collection.find_one({"id": enigma_id})
+    return Enigma.from_dict(enigma)
 
 
 def user_solved_enigma(user_id, enigma_id) -> bool:

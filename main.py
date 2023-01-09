@@ -5,9 +5,11 @@ import os
 
 from dotenv import load_dotenv
 from telegram import Update
+from telegram.constants import ParseMode
 from telegram.ext import CommandHandler, Application, CallbackContext, MessageHandler, filters
 
 import database
+from enigma import Enigma
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -19,7 +21,7 @@ load_dotenv()
 
 # Constants
 
-TOKEN = os.environ.get('TOKEN')
+TOKEN = os.getenv('TOKEN')
 PORT = int(os.getenv('PORT', 5000))
 HEROKU_PATH = os.getenv('HEROKU_PATH')
 
@@ -90,9 +92,8 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
     if database.user_has_enigma(user_id):
         # The user is attempting to solve an enigma
         enigma = database.get_user_enigma(user_id)
-        # TODO main should not know the structure of enigma
-        enigma_id = enigma['id']
-        enigma_solved = enigma['answer'] == update.message.text
+        enigma_id = enigma.get_id()
+        enigma_solved = enigma.answer_is_correct(update.message.text)
         if enigma_solved:
             # The answer is correct
             # Update the user's enigma
@@ -101,7 +102,6 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             text += "You can send me a new enigma id to try to solve another enigma\n"
         else:
             # The answer is incorrect
-            # TODO main should not know the structure of enigma
             text += f"The answer is incorrect for enigma {enigma_id}\n"
             text += "Try again or send /reset to be able to send a new enigma id"
         database.add_attempt(user_id, enigma_id, update.message.text, enigma_solved)
@@ -121,20 +121,14 @@ async def handle_message(update: Update, context: CallbackContext) -> None:
             enigma = database.get_enigma(enigma_id)
             # Check if the user already solved this enigma
             if database.user_solved_enigma(user_id, enigma_id):
-                # TODO main should not know the structure of enigma
                 text = "You already solved this enigma!\n"
-                text += f"Enigma {enigma_id}\n"
-                text += f"Name : {enigma['name']}\n"
-                text += f"Description : {enigma['description']}\n"
-                text += f"Answer: {enigma['answer']}\n"
-                text += f"Details: {enigma['details']}\n"
+                text += enigma.get_html_answer()
             else:
                 # Update the user's enigma
                 database.update_user_enigma(user_id, enigma_id)
                 # Send the enigma
-                # TODO main should not know the structure of enigma
-                text += f"Enigma {enigma_id} {enigma['description']}\n"
-    await update.message.reply_text(text)
+                text += enigma.get_html_enigma()
+    await update.message.reply_text(text, parse_mode=ParseMode.HTML)
     return
 
 
