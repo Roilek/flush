@@ -4,7 +4,7 @@ from typing import Any, Mapping
 import pymongo
 from dotenv import load_dotenv
 
-from enigma import Enigma
+from Enigma import Enigma
 
 # Constants
 
@@ -61,11 +61,11 @@ def register_user(user_id: int, first_name: str, last_name: str = None, username
 
 # --- ENIGMAS ---
 
-def add_enigma(enigma: Mapping[str, Any]) -> None:
+def add_enigma(enigma: Enigma) -> None:
     """Add an enigma."""
     db = mongo_client[DATABASE_NAME]
     collection = db[ENIGMAS_COLLECTION_NAME]
-    collection.insert_one(enigma)
+    collection.insert_one(enigma.to_dict())
     return
 
 
